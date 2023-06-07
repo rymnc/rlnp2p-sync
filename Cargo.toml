@@ -1,0 +1,17 @@
+[package]
+name = "rlnp2p-sync"
+version = "0.1.0"
+edition = "2021"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rln = { git = "https://github.com/vacp2p/zerokit", branch = "uncompressed" }
+web3 = "0.18.0"
+tokio = { version = "1.28.2", features = ["full"] }
+env_logger = "0.9.0"
+hex-literal = "0.2.0"
+serde_json = "1.0.64"
+pinata-sdk = "1.1.0"
+dotenv = "0.15.0"
