@@ -10,7 +10,7 @@ use serde_json::json;
 use std::io::Cursor;
 use web3::{
     futures::StreamExt,
-    types::{BlockNumber, FilterBuilder, H160, U256, H256},
+    types::{BlockNumber, FilterBuilder, H160, H256, U256},
 };
 
 const PINATA_API_KEY_ENV: &str = "PINATA_API_KEY";
@@ -91,7 +91,16 @@ async fn main() -> web3::contract::Result<()> {
 
         dbg!(root);
 
-        process_ipfs_data(&ipfs_client, root, start_index, vec_comm, block_number, block_hash, chain_id).await;
+        process_ipfs_data(
+            &ipfs_client,
+            root,
+            start_index,
+            vec_comm,
+            block_number,
+            block_hash,
+            chain_id,
+        )
+        .await;
     }
 
     Ok(())
