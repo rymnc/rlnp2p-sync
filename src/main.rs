@@ -8,11 +8,9 @@ use rln::{
 };
 use serde_json::json;
 use std::io::Cursor;
-use std::iter::once;
-
 use web3::{
     futures::StreamExt,
-    types::{BlockNumber, FilterBuilder, H160, U256},
+    types::{BlockNumber, FilterBuilder, H160, U256, H256},
 };
 
 const PINATA_API_KEY_ENV: &str = "PINATA_API_KEY";
@@ -70,6 +68,7 @@ async fn main() -> web3::contract::Result<()> {
         let data = log.unwrap();
 
         let block_number = data.number.unwrap().as_u64();
+        let block_hash = data.hash.unwrap();
 
         let filter = base_filter
             .clone()
@@ -92,7 +91,7 @@ async fn main() -> web3::contract::Result<()> {
 
         dbg!(root);
 
-        process_ipfs_data(&ipfs_client, root, &logs, chain_id).await;
+        process_ipfs_data(&ipfs_client, root, start_index, vec_comm, block_number, block_hash, chain_id).await;
     }
 
     Ok(())
@@ -159,31 +158,20 @@ fn process_logs(logs: &[web3::types::Log]) -> (usize, Vec<u8>) {
 async fn process_ipfs_data(
     ipfs_client: &PinataApi,
     root: Fr,
-    logs: &[web3::types::Log],
+    start_index: usize,
+    insertions: Vec<u8>,
+    block_number: u64,
+    block_hash: H256,
     chain_id: U256,
 ) {
-    let outputs: Vec<String> = logs
-        .iter()
-        .flat_map(|log| {
-            let data = &log.data.0;
-            let id_commitment = U256::from_little_endian(&data[0..32]);
-
-            let mut id_commitment_bytes = [0u8; 32];
-            id_commitment.to_little_endian(&mut id_commitment_bytes);
-
-            let (bytes_le, _) = bytes_le_to_fr(&id_commitment_bytes);
-            once(format!("{}", bytes_le))
-        })
-        .collect();
-
     let ipfs_data = json!({
         "state_change": "update",
-        "insertions": outputs,
+        "insertions": insertions,
         "deletions": [], // todo
-        "start_index": format!("{}", U256::from_big_endian(&logs[0].data.0[32..64])),
+        "start_index": start_index,
         "root": format!("{}", root),
-        "block_number": logs[0].block_number.unwrap().as_u64(),
-        "block_hash": logs[0].block_hash.unwrap().to_string(),
+        "block_number": block_number,
+        "block_hash": block_hash.to_string(),
         "chain_id": chain_id.as_u64(),
     });
 
